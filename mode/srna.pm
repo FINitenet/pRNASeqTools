@@ -21,7 +21,7 @@ option 'mmap' => (
   default => 'u',
   documentation => q[method for assigning multiple mapped reads. Allowed: u, n, f, r],
 );
-option 'nomapping' => (
+option 'no-mapping' => (
   is => 'rw',
   isa => 'Bool',
   default => 0,
@@ -39,7 +39,7 @@ option 'pvalue' => (
   default => '0.01',
   documentation => q[Threshold for DEG in P value. Default: 0.01],
 );
-option 'mappingonly' => (
+option 'mapping-only' => (
   is => 'rw',
   isa => 'Bool',
   default => 0,
@@ -49,7 +49,7 @@ option 'norm' => (
   is => 'rw',
   isa => 'Str',
   default => 'rRNA,total',
-  documentation => q[Method for normalization, seperated by comma. Allowed: rRNA, total, spike_in.],
+  documentation => q[Method for normalization, seperated by comma. Default: rRNA, total.],
 );
 option 'binsize' => (
   is => 'rw',
@@ -87,8 +87,8 @@ sub run {
   my $mmap = $options{'mmap'};
   my $control = $options{'control'};
   my $treatment = $options{'treatment'};
-  my $nomapping = $options{'nomapping'};
-  my $mappingonly = $options{'mappingonly'};
+  my $nomapping = $options{'no-mapping'};
+  my $mappingonly = $options{'mapping-only'};
   my $foldchange = $options{'foldchange'};
   my $pvalue = $options{'pvalue'};
   my $binsize = $options{'binsize'};
@@ -112,7 +112,6 @@ sub run {
   my $par = join " ", @par;
 
   if(!$nomapping){
-
     Ref->splitgff($prefix, $genome, $promoterLength);
     if(defined $mask){
       if($mask =~ /^~\/(.+)/){
@@ -131,7 +130,6 @@ sub run {
 
       $file = Function->SRR($file, $thread);
       Function->unzip($file, $tag);
-
       if($mode eq 'sc'){
 
         print $main::tee "\nTrimming $tag...\n";
@@ -140,7 +138,6 @@ sub run {
         if(defined $adaptor){
           system ("cutadapt -j ".$thread." -m 18 -M 42 --discard-untrimmed --trim-n -a ".$adaptor." -o ".$tag."_trimmed.fastq ".$tag.".fq 2>&1");
         }
-
         open DUP, "<".$tag."_trimmed.fastq" or die $!;
         my (%dedup, $outSeq, @seqNames, @outSeqNames);
         while (my $dup = <DUP>){
@@ -209,7 +206,7 @@ sub run {
 
       print $main::tee "\nLength distribution summary done!\nCounting start...\n";
 
-      open NF, "$tag.nf" or die $!;
+      open NF, $tag.".nf" or die $!;
       my %normhash;
       while (my $line = <NF>){
         chomp $line;
@@ -256,15 +253,12 @@ sub sta {
   my ($self, $mnorm, $prefix, $genome, $foldchange, $pvalue, $binsize, $par) = @_;
 
 	print $main::tee "\nDSR analysis...\nNormalization $mnorm\tFold Change $foldchange\tP Value $pvalue\n";
-
 	system ("Rscript --vanilla ".$prefix."/scripts/DSR.R ".$mnorm." ".$pvalue." ".$foldchange." ".$par);
-
   opendir my $dir, "." or die $!;
   my @dirdd = grep {/csv$/} readdir $dir;
   my @dird = grep {/$mnorm\.bin/} @dirdd;
   my @dir = grep {/hyper|hypo/} @dird;
   closedir $dir;
-
   foreach my $hcsv (@dir){
     open CSV, "$hcsv" or die $!;
     (my $bg = $hcsv) =~ s/csv$/bedgraph/;
@@ -306,19 +300,12 @@ sub sta {
 	}
 
 	print $main::tee "\nDE miRNA analysis...\nNormalization $mnorm\tFold Change $foldchange\tP Value $pvalue\n";
-
 	system ("Rscript --vanilla ".$prefix."/scripts/DEM.R ".$mnorm." ".$pvalue." ".$foldchange." ".$par);
-
 	print $main::tee "\nDS gene analysis...\nNormalization $mnorm\tFold Change $foldchange\tP Value $pvalue\n";
-
 	system ("Rscript --vanilla ".$prefix."/scripts/DSG.R ".$mnorm." ".$pvalue." ".$foldchange." ".$par);
-
 	print $main::tee "\nDS TE analysis...\nNormalization $mnorm\tFold Change $foldchange\tP Value $pvalue\n";
-
 	system ("Rscript --vanilla ".$prefix."/scripts/DST.R ".$mnorm." ".$pvalue." ".$foldchange." ".$par);
-
 	print $main::tee "\nDS Promoter analysis...\nNormalization $mnorm\tFold Change $foldchange\tP Value $pvalue\n";
-
 	system ("Rscript --vanilla ".$prefix."/scripts/DSP.R ".$mnorm." ".$pvalue." ".$foldchange." ".$par);
 }
 
@@ -346,7 +333,7 @@ sub count {
     $mirna{$miseq}{"count"} += $count{$row[8]};
   }
   close MI;
-  open MIO, ">$tag".".miRNA.annotated.count" or die $!;
+  open MIO, ">".$tag.".miRNA.annotated.count" or die $!;
   foreach $miseq (sort keys %mirna){
     chop $mirna{$miseq}{"name"};
     print MIO "$mirna{$miseq}{name}\t$mirna{$miseq}{count}\n";
@@ -354,7 +341,6 @@ sub count {
   close MIO;
   %count = ();
   %mirna = ();
-
   opendir my $dir, "." or die $!;
   my @dir = grep {/$tag.*[0-9]\.bed/} readdir $dir;
   close $dir;

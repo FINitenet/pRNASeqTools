@@ -14,7 +14,7 @@ command_short_description q[Analysis for phasiRNA using small RNA-seq];
 command_long_description q[Analysis for phasiRNA using small RNA-seq];
 command_usage q[pRNASeqTools phasi [OPTIONS] --control [CONTROL]=[file1]+[file2] ... --treatment [TREATMENT]=[file1]+[file2] ... ];
 
-option 'nomapping' => (
+option 'no-mapping' => (
   is => 'rw',
   isa => 'Bool',
   default => 0,
@@ -62,8 +62,8 @@ sub run {
   my $mmap = $options{'mmap'};
   my $control = $options{'control'};
   my $treatment = $options{'treatment'};
-  my $nomapping = $options{'nomapping'};
-  my $mappingonly = $options{'mappingonly'};
+  my $nomapping = $options{'no-mapping'};
+  my $mappingonly = $options{'mapping-only'};
   my $binsize = $options{'binsize'};
   my $norm = $options{'norm'};
   my @norms = split /,/, $norm;

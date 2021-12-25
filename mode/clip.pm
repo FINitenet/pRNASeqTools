@@ -15,13 +15,13 @@ command_short_description q[Analysis for CLIP-seq];
 command_long_description q[Analysis for CLIP-seq];
 command_usage q[pRNASeqTools clip [OPTIONS] --control [CONTROL]=[file1]+[file2] ... --treatment [TREATMENT]=[file1]+[file2] ... ];
 
-option 'nomapping' => (
+option 'no-mapping' => (
   is => 'rw',
   isa => 'Bool',
   default => 0,
   documentation => q[Just perform the statistic analysis.],
 );
-option 'mappingonly' => (
+option 'mapping-only' => (
   is => 'rw',
   isa => 'Bool',
   default => 0,
@@ -50,8 +50,8 @@ sub run {
   my $prefix = $options{'prefix'};
   my $control = $options{'control'};
   my $treatment = $options{'treatment'};
-  my $nomapping = $options{'nomapping'};
-  my $mappingonly = $options{'mappingonly'};
+  my $nomapping = $options{'no-mapping'};
+  my $mappingonly = $options{'mapping-only'};
   my $foldchange = $options{'foldchange'};
   my $pvalue = $options{'pvalue'};
 
@@ -115,7 +115,7 @@ sub run {
       system ("bamCoverage -b ".$tag.".bam -bs 5 -p ".$thread." --ignoreDuplicates --filterRNAstrand reverse --normalizeUsing RPKM -o ".$tag.".reverse.bw");
 
       print $main::tee "\nAlignment completed!\nFinding peaks...\n";
-      
+
       system ("clipper -b ".$tag.".bam -s ".$genome." --FDR=0.01 --minreads=2 --processors=".$thread." --threshold-method=binomial --min_width=20 -o ".$tag.".fitted_clusters.bed -v 2>&1");
 
     }

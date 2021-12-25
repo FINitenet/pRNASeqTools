@@ -15,13 +15,13 @@ command_short_description q[Analysis for WGBS sequencing];
 command_long_description q[Analysis for WGBS sequencing];
 command_usage q[pRNASeqTools wgbs [OPTIONS] --control [CONTROL]=[file1]+[file2] ... ];
 
-option 'nomapping' => (
+option 'no-mapping' => (
   is => 'rw',
   isa => 'Bool',
   default => 0,
   documentation => q[Just perform the ribo-seq analysis],
 );
-option 'mappingonly' => (
+option 'mapping-only' => (
   is => 'rw',
   isa => 'Bool',
   default => 0,
@@ -47,8 +47,8 @@ sub run {
   my $genome = $options{'genome'};
   my $adaptor = $options{'adaptor'};
   my $prefix = $options{'prefix'};
-  my $nomapping = $options{'nomapping'};
-  my $mappingonly = $options{'mappingonly'};
+  my $nomapping = $options{'no-mapping'};
+  my $mappingonly = $options{'mapping-only'};
   my $control = $options{'control'};
   my $treatment = $options{'treatment'};
   my $ns = $options{'ns'};
@@ -69,9 +69,7 @@ sub run {
   my $par = join " ", @par;
 
   if(!$nomapping){
-
     print $main::tee "\nBuilding indices...\n";
-
     symlink $prefix."/reference/".$genome."_chr_all.fasta", $genome.".fasta";
     system ("bismark_genome_preparation . 2>&1");
 
@@ -101,7 +99,7 @@ sub run {
           Function->unzip($files[0], $tag."_R1");
           Function->unzip($files[1], $tag."_R2");
           if(defined $adaptor){
-            system ("cutadapt -j ".$thread." -m 20 --trim-n -a ".$adaptor." -A ".$adaptor."-o ".$tag."_R1_trimmed.fastq -p ".$tag."_R2_trimmed.fastq ".$tag."_R1.fastq ".$tag."_R2.fastq 2>&1");
+            system ("cutadapt -j ".$thread." -m 20 --trim-n -a ".$adaptor." -A ".$adaptor." -o ".$tag."_R1_trimmed.fastq -p ".$tag."_R2_trimmed.fastq ".$tag."_R1.fastq ".$tag."_R2.fastq 2>&1");
             rename $tag."_R1_trimmed.fastq", $tag."_R1.fastq";
             rename $tag."_R2_trimmed.fastq", $tag."_R2.fastq";
           }
@@ -116,7 +114,7 @@ sub run {
         Function->unzip($file1, $tag."_R1");
         Function->unzip($file2, $tag."_R2");
         if(defined $adaptor){
-          system ("cutadapt -j ".$thread." -m 20 --trim-n -a ".$adaptor." -A ".$adaptor."-o ".$tag."_R1_trimmed.fastq -p ".$tag."_R2_trimmed.fastq ".$tag."_R1.fastq ".$tag."_R2.fastq 2>&1");
+          system ("cutadapt -j ".$thread." -m 20 --trim-n -a ".$adaptor." -A ".$adaptor." -o ".$tag."_R1_trimmed.fastq -p ".$tag."_R2_trimmed.fastq ".$tag."_R1.fastq ".$tag."_R2.fastq 2>&1");
           rename $tag."_R1_trimmed.fastq", $tag."_R1.fastq";
           rename $tag."_R2_trimmed.fastq", $tag."_R2.fastq";
         }
@@ -125,34 +123,30 @@ sub run {
         rename $tag."_R1_bismark_bt2_pe.deduplicated.bam", $tag.".bam";
         system ("bismark_methylation_extractor --parallel ".$thread." -p --bedGraph --cutoff 4 --cytosine_report --CX --genome_folder . ".$tag.".bam 2>&1");
         unlink ($tag."_R1.fastq", $tag."_R2.fastq", $tag."_R1_bismark_bt2_pe.bam");
-        system ("awk '{OFS=\"\\t\";if(\$4+\$5>0){if(\$6==\"CG\"){print \$1,\$2,\$2+1,\$4/(\$4+\$5) > \"".$tag.".CG.bedgraph\"}; if(\$6==\"CHG\"){print \$1,\$2,\$2+1,\$4/(\$4+\$5) > \"".$tag.".CHG.bedgraph\"}; if(\$6==\"CHH\"){print \$1,\$2,\$2+1,\$4/(\$4+\$5) > \"".$tag.".CHH.bedgraph\"}}}' ".$tag.".CX_report.txt")
+        system ("awk '{OFS=\"\\t\";if(\$4+\$5>0){if(\$6==\"CG\"){print \$1,\$2,\$2+1,\$4/(\$4+\$5) > \"".$tag.".CG.bedgraph\"}; if(\$6==\"CHG\"){print \$1,\$2,\$2+1,\$4/(\$4+\$5) > \"".$tag.".CHG.bedgraph\"}; if(\$6==\"CHH\"){print \$1,\$2,\$2+1,\$4/(\$4+\$5) > \"".$tag.".CHH.bedgraph\"}}}' ".$tag.".CX_report.txt");
+        system ("sort -k1,1 -k2,2n ".$tag.".CX_report.txt > tmp");
+        system ("bgzip -c tmp > ".$tag.".CX_report.txt.gz");
+        system ("tabix -C -p vcf ".$tag.".CX_report.txt.gz");
       }
-
       print $main::tee "\nAlignment finished...\n";
-
       mode::wgbs->bin($tag, $binsize, $minC);
-      unlink glob ("C*_O?_".$tag.".txt");
+      unlink glob ("C*_O?_".$tag.".txt"), "tmp";
     }
 
     if(!$mappingonly and $#par > 1){
-
       print $main::tee "\nPerforming DMRcaller...\n";
-
-      system ("Rscript --vanilla ".$prefix."/scripts/DMRcaller.R ".$thread." ".$binsize." ".$par);
+      system ("Rscript --vanilla ".$prefix."/scripts/DMRcaller.R ".$thread." ".$par);
     }
-
     remove_tree "Bisulfite_Genome";
     unlink ($genome.".fasta", glob ("*.ebwt"));
 
   }else{
     foreach my $pre (@tags){
-      symlink "../".$pre.".CX_report.txt", $pre.".CX_report.txt" or die $!;
+      symlink "../".$pre.".CX_report.txt.gz", $pre.".CX_report.txt.gz" or die $!;
     }
-
     print $main::tee "\nPerforming DMRcaller...\n";
-
-    system ("Rscript --vanilla ".$prefix."/scripts/DMRcaller.R ".$thread." ".$binsize." ".$par);
-    unlink glob ("*.CX_report.txt");
+    system ("Rscript --vanilla ".$prefix."/scripts/DMRcaller.R ".$thread." ".$par);
+    unlink glob ("*.CX_report.txt.gz");
   }
 }
 

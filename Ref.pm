@@ -28,9 +28,9 @@ sub gff {
         $index{$chr}{$ind-1}{$id}{end} = $row[4];
       }
     }elsif($row[8] =~ /Parent=$id/){
-        $index{$chr}{$ind}{$id}{exon} .= $row[3]."\t".$row[4].";";
-        $index{$chr}{$ind+1}{$id}{exon} .= $row[3]."\t".$row[4].";";
-        $index{$chr}{$ind-1}{$id}{exon} .= $row[3]."\t".$row[4].";";
+      $index{$chr}{$ind}{$id}{exon} .= $row[3]."\t".$row[4].";";
+      $index{$chr}{$ind+1}{$id}{exon} .= $row[3]."\t".$row[4].";";
+      $index{$chr}{$ind-1}{$id}{exon} .= $row[3]."\t".$row[4].";";
     }
   }
   close GFF;
@@ -262,8 +262,8 @@ sub gann {
   my ($self, $prefix, $genome) = @_;
   my %gann;
 
-  open BIN, $prefix."/reference/".$genome.".BIN" or die $!;
-  open FUN, $prefix."/reference/".$genome.".functional.annotation" or die $!;
+  open BIN, $prefix."/reference/".$genome.".BIN";
+  open FUN, $prefix."/reference/".$genome.".functional.annotation";
   while(my $aa = <BIN>){
     chomp $aa;
     my ($geneID, $bin) = split /\t/, $aa;
@@ -276,12 +276,12 @@ sub gann {
   while(my $bb = <FUN>){
     chomp $bb;
     my @fann = split /\t/, $bb;
-    if($fann[0] =~ /(\w+)\.1/){
+    if($fann[0] =~ /(\w+)\.1$/){
       my $geneID = $1;
       if(exists $gann{$geneID}){
-        $gann{$geneID} .= ",$fann[1],$fann[2],$fann[3],$fann[4]";
+        $gann{$geneID} .= ",\"$fann[1]\",\"$fann[2]\",\"$fann[3]\",\"$fann[4]\"";
       }else{
-        $gann{$geneID} .= "NA,$fann[1],$fann[2],$fann[3],$fann[4]";
+        $gann{$geneID} .= "NA,\"$fann[1]\",\"$fann[2]\",\"$fann[3]\",\"$fann[4]\"";
       }
     }
   }
