@@ -18,10 +18,10 @@ sub dependencies {
   my $bedtools = qx(bedtools --version);
   my $R = qx(R --version);
   my $star = qx(STAR --version);
-  my $clipper = qx(clipper -h 2>&1);
+#  my $clipper = qx(clipper -h 2>&1);
   my $fasterq_dump = qx(fasterq-dump -h);
   my $gffread = qx(gffread --version 2>&1);
-  my $chip = qx(configureHomer.pl -list 2>&1|grep "+");
+  my $chip = qx(Genrich --version 2>&1);
   my $sc = qx(umi_tools -v);
   my $deeptools = qx(deeptools --version 2>&1);
   my $bedgraphtobigwig = qx(bedGraphToBigWig 2>&1);
@@ -75,11 +75,11 @@ sub dependencies {
   }else{
   	die "Please install STAR!";
   }
-  if($clipper =~ /^Usage/){
-    print STDERR "CLIPper installed\n";
-  }else{
-    die "Please install CLIPper";
-  }
+#  if($clipper =~ /^Usage/){
+#    print STDERR "CLIPper installed\n";
+#  }else{
+#    die "Please install CLIPper";
+#  }
   if($fasterq_dump =~ /fasterq-dump.+(\d\.\d+\.\d)/){
   	print STDERR "fasterq-dump version $1\n";
   }else{
@@ -95,10 +95,10 @@ sub dependencies {
   }else{
     die "Please install deeptools!";
   }
-  if($chip =~ /tair10/){
-    print STDERR "homer tair10 installed\n";
+  if($chip =~ /version (\d\.\d\.\d)/){
+    print STDERR "Genrich version $1\n";
   }else{
-    die "Please install the tair10 package of homer!";
+    die "Please install Genrich!";
   }
   if($sc =~ /(\d\.\d+\.\d)/){
     print STDERR "UMI-tools version $1\n";

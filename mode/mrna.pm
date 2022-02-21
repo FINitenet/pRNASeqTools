@@ -137,7 +137,7 @@ sub run {
             rename "tmp.fastq", $tag.".fastq";
             unlink $tag.".mask.out";
           }
-    			system ("STAR --genomeDir Genome --alignIntronMax 5000 --outSAMtype BAM SortedByCoordinate --limitBAMsortRAM 10000000000 --outSAMmultNmax 1 --outFilterMultimapNmax 50 --outFilterMismatchNoverLmax 0.1 --runThreadN ".$thread." --readFilesIn ".$tag.".fastq 2>&1");
+    			system ("STAR --runMode alignReads --genomeDir Genome --alignIntronMax 5000 --outReadsUnmapped Fastx --outSAMtype BAM SortedByCoordinate --limitBAMsortRAM 10000000000 --outSAMmultNmax 1 --outFilterMultimapNmax 50 --outFilterMismatchNoverLmax 0.1 --runThreadN ".$thread." --readFilesIn ".$tag.".fastq 2>&1");
     			unlink ($tag.".fastq");
         }else{
           $seqStrategy = "paired";
@@ -154,7 +154,7 @@ sub run {
             rename "tmp_2.fastq", $tag."_R2.fastq";
             unlink $tag.".mask.out";
           }
-          system ("STAR --genomeDir Genome --alignIntronMax 5000 --outSAMtype BAM SortedByCoordinate --limitBAMsortRAM 10000000000 --outSAMmultNmax 1 --outFilterMultimapNmax 50 --outFilterMismatchNoverLmax 0.1 --runThreadN ".$thread." --readFilesIn ".$tag."_R1.fastq ".$tag."_R2.fastq 2>&1");
+          system ("STAR --runMode alignReads --genomeDir Genome --alignIntronMax 5000 --outReadsUnmapped Fastx --outSAMtype BAM SortedByCoordinate --limitBAMsortRAM 10000000000 --outSAMmultNmax 1 --outFilterMultimapNmax 50 --outFilterMismatchNoverLmax 0.1 --runThreadN ".$thread." --readFilesIn ".$tag."_R1.fastq ".$tag."_R2.fastq 2>&1");
           unlink ($tag."_R1.fastq", $tag."_R2.fastq");
         }
   		}else{
@@ -173,7 +173,7 @@ sub run {
           rename "tmp_2.fastq", $tag."_R2.fastq";
           unlink $tag.".mask.out";
         }
-        system ("STAR --genomeDir Genome --alignIntronMax 5000 --outSAMtype BAM SortedByCoordinate --limitBAMsortRAM 10000000000 --outSAMmultNmax 1 --outFilterMultimapNmax 50 --outFilterMismatchNoverLmax 0.1 --runThreadN ".$thread." --readFilesIn ".$tag."_R1.fastq ".$tag."_R2.fastq 2>&1");
+        system ("STAR --runMode alignReads --genomeDir Genome --alignIntronMax 5000 --outSAMtype BAM SortedByCoordinate --limitBAMsortRAM 10000000000 --outSAMmultNmax 1 --outFilterMultimapNmax 50 --outFilterMismatchNoverLmax 0.1 --runThreadN ".$thread." --readFilesIn ".$tag."_R1.fastq ".$tag."_R2.fastq 2>&1");
   			unlink ($tag."_R1.fastq", $tag."_R2.fastq");
   		}
   		rename "Aligned.sortedByCoord.out.bam", $tag.".bam";
@@ -269,7 +269,7 @@ sub countBAM {
 	if($seqStrategy eq "single"){
 		system ("featureCounts -T ".$thread." -O -G ".$prefix."/reference/".$genome."_chr_all.fasta -s 0 -a ".$genome."_genes.gtf -o total.count ".$tag.".bam 2>&1");
 	}elsif($seqStrategy eq "paired"){
-		system ("featureCounts -T ".$thread." -p -B -C -O -G ".$prefix."/reference/".$genome."_chr_all.fasta -s 0 -a ".$genome."_genes.gtf -o total.count ".$tag.".bam 2>&1");
+		system ("featureCounts -T ".$thread." -p --countReadPairs -B -C -O -G ".$prefix."/reference/".$genome."_chr_all.fasta -s 0 -a ".$genome."_genes.gtf -o total.count ".$tag.".bam 2>&1");
 	}
 	open COUNT, "<total.count" or die $!;
 	my $header = <COUNT>;
