@@ -14,11 +14,11 @@ sub dependencies {
   my $bowtie = qx(bowtie --version);
   my $bowtie2 = qx(bowtie2 --version);
   my $featureCounts = qx(featureCounts -v 2>&1);
-  my $shortstack = qx(ShortStack -v);
+  my $shortstack = qx(ShortStack --version);
   my $bedtools = qx(bedtools --version);
   my $R = qx(R --version);
   my $star = qx(STAR --version);
-#  my $clipper = qx(clipper -h 2>&1);
+# my $clipper = qx(clipper -h 2>&1);
   my $fasterq_dump = qx(fasterq-dump -h);
   my $gffread = qx(gffread --version 2>&1);
   # my $chip = qx(Genrich --version 2>&1);
@@ -55,7 +55,7 @@ sub dependencies {
   }else{
     die "Please install featureCounts!\n";
   }
-  if($shortstack =~ /version 3/){
+  if($shortstack =~ /ShortStack.+[34]/){
   	print STDERR "$shortstack";
   }else{
   	die "Please install ShortStack!\n";

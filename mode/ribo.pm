@@ -57,16 +57,15 @@ sub run {
   my $par = join " ", @tags;
 
   if(!$nomapping){
-    die "Please specify the 3\' adaptor!" if($adaptor eq "");
-	if(defined $mask){
-		if($mask =~ /^~\/(.+)/){
-			$mask = $ENV{"HOME"}."/".$1;
-		}elsif($mask !~ /^\//){
-			$mask = abs_path "../".$mask;
-		}
-		symlink $mask, "mask.fa";
-		system ("bowtie-build -q mask.fa mask");
-	}
+  	if(defined $mask){
+  		if($mask =~ /^~\/(.+)/){
+  			$mask = $ENV{"HOME"}."/".$1;
+  		}elsif($mask !~ /^\//){
+  			$mask = abs_path "../".$mask;
+  		}
+  		symlink $mask, "mask.fa";
+  		system ("bowtie-build -q mask.fa mask");
+  	}
     remove_tree "Genome" if(-e "Genome");
     make_path ("Genome", "chr");
     system ("gffread -T -C -o ".$genome.".gtf -g ".$prefix."/reference/".$genome."_chr_all.fasta ".$prefix."/reference/".$genome."_genes.gff");
@@ -92,7 +91,7 @@ sub run {
       cat 'Log.final.out', \*STDOUT;
       system ("samtools view -h -F 0x100 Aligned.toTranscriptome.out.bam |samtools sort -o ".$tag.".bam -");
       system ("samtools index ".$tag.".bam");
-      system ("samtools view -q 10 -b Aligned.sortedByCoord.out.bam > ".$tag.".chr.sam");
+      system ("samtools view -q 10 -b Aligned.sortedByCoord.out.bam > ".$tag.".chr.bam");
       system ("samtools index ".$tag.".chr.bam");
       system ("bamCoverage -b ".$tag.".chr.bam --skipNAs -bs 5 --minMappingQuality 10 -p ".$thread." --normalizeUsing CPM -o ".$tag.".bw");
       unlink ($tag.".fastq", "tmp.sam");
