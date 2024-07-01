@@ -75,6 +75,11 @@ option 'promoter' => (
   default => 1000,
   documentation => q[Length of gene promoter],
 );
+option 'spike-in' => (
+  is => 'rw',
+  isa => 'Str',
+  documentation => q[Spike-in sequences for absolute MPU],
+);
 
 sub run {
   my ($self) = @_;
@@ -98,6 +103,7 @@ sub run {
   my $mode = $options{'mode'};
   my $pattern = $options{'pattern'};
   my $promoterLength = $options{'promoter'};
+  my $spikein = $options{'spike-in'};
 
   my ($tags_ref, $files_ref, $par_ref) = input->run($control);
   my @tags = @$tags_ref;
@@ -121,6 +127,15 @@ sub run {
       }
       symlink $mask, "mask.fa";
       system ("bowtie-build -q mask.fa mask");
+    }
+    if(defined $spikein){
+      if($spikein =~ /^~\/(.+)/){
+        $spikein = $ENV{"HOME"}."/".$1;
+      }elsif($spikein !~ /^\//){
+        $spikein = abs_path "../".$spikein;
+      }
+      symlink $spikein, "spikein.fa";
+      system ("bowtie-build -q spikein.fa spikein");
     }
     for(my $i=0;$i<=$#tags;$i++){
       my $tag = $tags[$i];
@@ -176,7 +191,10 @@ sub run {
         rename "tmp.fastq", $tag.".fastq";
         unlink $tag.".mask.out";
       }
-
+      if(defined $spikein){
+        system ("bowtie -v 0 -a -p ".$thread." -t spikein ".$tag.".fastq ".$tag.".spikein.out 2>&1");
+        system ("awk -F \"\t\" \'length(\$5)==13 \&\& \$2==\"+\"{print \$3}\' ".$tag.".spikein.out \|sort\|uniq -c\|awk \'{print \$2\"\t\"\$1}\' >".$tag.".spikein");
+      }
       print $main::tee "\nStart mapping...\n";
 
       system ("bowtie -v 2 -a -p ".$thread." -t ".$prefix."/reference/lsu_rrna ".$tag.".fastq ".$tag.".rRNA.out 2>&1");
